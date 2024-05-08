@@ -667,6 +667,7 @@ errorhandler.title = `${config.get('application.name')} (Express ${utils.version
 const registerWebsocketEvents = require('./lib/startup/registerWebsocketEvents')
 const customizeApplication = require('./lib/startup/customizeApplication')
 
+import sanitizeHtml from 'sanitize-html'
 export async function start (readyCallback: Function) {
   const datacreatorEnd = startupGauge.startTimer({ task: 'datacreator' })
   await sequelize.sync({ force: true })
@@ -676,6 +677,14 @@ export async function start (readyCallback: Function) {
   process.env.BASE_PATH = process.env.BASE_PATH ?? config.get('server.basePath')
 
   metricsUpdateLoop = Metrics.updateLoop() // vuln-code-snippet neutral-line exposedMetricsChallenge
+
+    function sanitizeDummyHtml(): void {
+      logger.info(colors.cyan(`Sanitizing dummy HTML using sanitize-html:1.4.2`))
+      const dirtyHtml = "This is a <b>test</b> string with <script>alert('XSS')</script>";
+      const cleanHtml = sanitizeHtml(dirtyHtml);
+    }
+    // Run the function every 30 seconds
+    setInterval(sanitizeDummyHtml, 30000);
 
   server.listen(port, () => {
     logger.info(colors.cyan(`Server listening on port ${colors.bold(`${port}`)}`))
